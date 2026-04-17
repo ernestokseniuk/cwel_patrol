@@ -447,7 +447,7 @@ def guild_delta_marker(delta_10m: int) -> str:
 
 def build_discord_stats_payload(world: str, cycle_data: Dict, avatar_url: str) -> Dict:
     now_iso = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-    title = f"Margonem monitor | {world} | statystyki"
+    title = f"Cwel Patrol | statystyki"
     delta_10m = int(cycle_data.get("delta_10m", 0))
     color, trend_label, trend_icon = trend_style(delta_10m)
     delta_sign = "+" if delta_10m > 0 else ""
@@ -539,7 +539,7 @@ def build_discord_stats_payload(world: str, cycle_data: Dict, avatar_url: str) -
 
 def build_discord_nicks_payload(world: str, cycle_data: Dict, avatar_url: str) -> Dict:
     now_iso = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-    title = f"Margonem monitor | {world} | nicki online"
+    title = f"Cwel Patrol| nicki online"
     description = f"Zaktualizowano: {utc_now()}"
 
     embed: Dict[str, object] = {
@@ -830,7 +830,7 @@ def build_startup_message(world: str, cycle_data: Dict) -> str:
         for g in cycle_data["guild_breakdown"]
     )
     return (
-        f"[Margonem monitor] Start {utc_now()}\n"
+        f"[Cwel Patrol] Start {utc_now()}\n"
         f"Swiat: {world}\n"
         f"Klanow: {len(cycle_data['guild_breakdown'])} ({guild_breakdown})\n"
         f"Sledzonych postaci: {cycle_data['tracked_members_count']}\n"
@@ -841,7 +841,7 @@ def build_startup_message(world: str, cycle_data: Dict) -> str:
 
 def build_delta_message(world: str, cycle_data: Dict) -> str:
     return (
-        f"[Margonem monitor] Zmiana {utc_now()} | swiat: {world}\n"
+        f"[Cwel Patrol] Zmiana {utc_now()} | swiat: {world}\n"
         f"Online teraz: {cycle_data['online_count']}\n"
         f"Weszli online ({len(cycle_data['went_online'])}): "
         f"{format_name_list(cycle_data['went_online'])}\n"
@@ -852,7 +852,7 @@ def build_delta_message(world: str, cycle_data: Dict) -> str:
 
 def build_status_message(world: str, cycle_data: Dict) -> str:
     lines = [
-        f"[Margonem monitor] Stan {utc_now()} | swiat: {world}",
+        f"[Cwel Patrol] Stan {utc_now()} | swiat: {world}",
         f"Sledzonych postaci: {cycle_data['tracked_members_count']}",
         f"Online teraz: {cycle_data['online_count']}",
         "",
