@@ -1,0 +1,30 @@
+name = "margonem-guild-monitor"
+main = "cloudflare-worker.js"
+compatibility_date = "2026-04-16"
+
+# Cloudflare Cron ma minimalny interwal 1 minuta.
+# Ten trigger jest opcjonalny i tylko wywoluje endpoint scheduled (jesli go dodasz).
+[triggers]
+crons = ["*/1 * * * *"]
+
+[vars]
+# Pelna mapa zgodna z config.json
+WORLD = "gordion"
+GUILD_IDS = "27,2230,10,164,1386,1459,1925,1928,2141,2274,692"
+OUTPUT_MODE = "discord"
+WEBHOOK_USERNAME = "Cwel Patrol"
+WEBHOOK_AVATAR_URL = "https://bivis.pl/wp-content/uploads/2025/09/Kamizelki.jpg"
+POLL_SECONDS = "10"
+GUILD_REFRESH_SECONDS = "3600"
+REQUEST_TIMEOUT = "60"
+STATE_FILE = "state.json"
+NOTIFY_ON_STARTUP = "true"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) MargonemGuildMonitor/1.0"
+
+# Wymagane dla trwalego stanu (ID wiadomosci webhook, historia 10m, online_norm)
+[[kv_namespaces]]
+binding = "MONITOR_STATE"
+id = "b1257aa675c546a5bc19b20d4a3d8865"
+
+# WEBHOOK_URL ustaw jako sekret (nie trzymaj go w repo):
+# wrangler secret put WEBHOOK_URL

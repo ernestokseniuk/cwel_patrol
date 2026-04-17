@@ -1,0 +1,15 @@
+# Lokalne zmienne dla wrangler dev
+# Skopiuj do .dev.vars i uzupelnij
+
+WORLD=gordion
+GUILD_IDS=27,2230,10,164,1386,1459,1925,1928,2141,2274,692
+OUTPUT_MODE=discord
+WEBHOOK_URL=
+WEBHOOK_USERNAME=Cwel Patrol
+WEBHOOK_AVATAR_URL=https://bivis.pl/wp-content/uploads/2025/09/Kamizelki.jpg
+POLL_SECONDS=10
+GUILD_REFRESH_SECONDS=3600
+REQUEST_TIMEOUT=20
+STATE_FILE=state.json
+NOTIFY_ON_STARTUP=true
+USER_AGENT=Mozilla/5.0 (Windows NT 10.0; Win64; x64) MargonemGuildMonitor/1.0
