@@ -6,10 +6,10 @@
       "name": "Wszystkie klany",
       "guild_ids": [27,2230,10,164,1386,1459,1925,1928,2141,2274,692]
     },{
-      "name": "Klany 114 - Garbaci",
+      "name": "Klany 114",
       "guild_ids": [2230,27,2141]
     },{
-      "name": "Klany 83 - 114",
+      "name": "Klany 83",
       "guild_ids": [10,1459,1928]
     },
     {
@@ -25,7 +25,7 @@
   "webhook_url": "https://discord.com/api/webhooks/1494346751383965726/Cytssyu5Tdr6DFvaCTEPFydsydpehavsg1td817jBFlvJU_5c-O2kOOgSsEP5aUIz9Tc",
   "webhook_username": "Cwel Patrol",
   "webhook_avatar_url": "https://bivis.pl/wp-content/uploads/2025/09/Kamizelki.jpg",
-  "poll_seconds": 60,
+  "poll_seconds": 30,
   "guild_refresh_seconds": 3600,
   "request_timeout": 20,
   "state_file": "state.json",

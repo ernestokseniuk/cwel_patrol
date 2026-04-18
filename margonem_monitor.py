@@ -97,8 +97,8 @@ def load_config(config_path: Path) -> Dict:
     if output_mode in {"discord", "both"} and not str(config["webhook_url"]).strip():
         raise ValueError("Dla output_mode=discord/both wymagane jest webhook_url")
 
-    if int(config["poll_seconds"]) < 60:
-        config["poll_seconds"] = 60
+    if int(config["poll_seconds"]) < 30:
+        config["poll_seconds"] = 30
 
     if int(config["guild_refresh_seconds"]) <= 0:
         raise ValueError("guild_refresh_seconds musi byc > 0")
