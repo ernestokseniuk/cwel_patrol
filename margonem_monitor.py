@@ -5,9 +5,14 @@ import logging
 import re
 import time
 from io import BytesIO
-from datetime import datetime, timezone
+from datetime import date, datetime, time as dt_time, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
+
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:  # pragma: no cover - Python < 3.9 fallback
+    ZoneInfo = None
 
 import requests
 from bs4 import BeautifulSoup
@@ -53,8 +58,49 @@ def normalize_name(name: str) -> str:
     return re.sub(r"\s+", " ", name).strip().casefold()
 
 
+def _last_sunday(year: int, month: int) -> date:
+    if month == 12:
+        next_month = date(year + 1, 1, 1)
+    else:
+        next_month = date(year, month + 1, 1)
+    last_day = next_month - timedelta(days=1)
+    return last_day - timedelta(days=(last_day.weekday() + 1) % 7)
+
+
+def poland_now() -> datetime:
+    if ZoneInfo is not None:
+        try:
+            return datetime.now(ZoneInfo("Europe/Warsaw"))
+        except Exception:
+            pass
+
+    now_utc = datetime.now(timezone.utc)
+    year = now_utc.year
+    dst_start = datetime.combine(_last_sunday(year, 3), dt_time(1, 0), tzinfo=timezone.utc)
+    dst_end = datetime.combine(_last_sunday(year, 10), dt_time(1, 0), tzinfo=timezone.utc)
+    offset = timedelta(hours=2) if dst_start <= now_utc < dst_end else timedelta(hours=1)
+    return now_utc + offset
+
+
+def poland_datetime_from_utc(dt_utc: datetime) -> datetime:
+    if dt_utc.tzinfo is None:
+        dt_utc = dt_utc.replace(tzinfo=timezone.utc)
+
+    if ZoneInfo is not None:
+        try:
+            return dt_utc.astimezone(ZoneInfo("Europe/Warsaw"))
+        except Exception:
+            pass
+
+    year = dt_utc.year
+    dst_start = datetime.combine(_last_sunday(year, 3), dt_time(1, 0), tzinfo=timezone.utc)
+    dst_end = datetime.combine(_last_sunday(year, 10), dt_time(1, 0), tzinfo=timezone.utc)
+    offset = timedelta(hours=2) if dst_start <= dt_utc < dst_end else timedelta(hours=1)
+    return (dt_utc + offset).replace(tzinfo=timezone(offset))
+
+
 def utc_now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    return poland_now().strftime("%Y-%m-%d %H:%M:%S")
 
 
 def load_config(config_path: Path) -> Dict:
@@ -380,7 +426,7 @@ def build_chart_window_label(points: int) -> str:
 
 
 def format_chart_timestamp(ts: int) -> str:
-    return datetime.fromtimestamp(ts).strftime("%H:%M")
+    return poland_datetime_from_utc(datetime.fromtimestamp(ts, tz=timezone.utc)).strftime("%H:%M")
 
 
 def load_chart_font(size: int) -> ImageFont.ImageFont:
@@ -747,6 +793,41 @@ def render_guild_chart_png(
         last_x, last_y = plot_points[-1]
         draw.ellipse((last_x - 5, last_y - 5, last_x + 5, last_y + 5), fill=current_dot_color, outline=total_line_color, width=2)
 
+    if len(clamped_points) >= 2:
+        peak_label_indices: List[int] = []
+        window_size = max(1, CHART_X_LABEL_EVERY_MINUTES)
+
+        for window_start in range(0, len(clamped_points), window_size):
+            window_end = min(window_start + window_size, len(clamped_points))
+            window_values = [value for _, value in clamped_points[window_start:window_end]]
+            if not window_values:
+                continue
+
+            local_peak_value = max(window_values)
+            local_peak_offset = window_values.index(local_peak_value)
+            peak_label_indices.append(window_start + local_peak_offset)
+
+        for index in peak_label_indices:
+            ts, _ = clamped_points[index]
+            x = left + index * x_step
+            y = plot_points[index][1]
+            timestamp_label = format_chart_timestamp(ts)
+            label_width = draw.textlength(timestamp_label, font=timestamp_font)
+            label_height = 16
+
+            label_x = int(max(left, min(right - label_width - 10, x - (label_width / 2) - 6)))
+            place_above = y > top + (chart_height * 0.32)
+            label_y = int(max(top + 6, y - 24)) if place_above else int(min(bottom - 22, y + 8))
+
+            background_box = (
+                label_x,
+                label_y,
+                int(label_x + label_width + 12),
+                int(label_y + label_height + 4),
+            )
+            draw.rounded_rectangle(background_box, radius=4, fill=(11, 14, 20, 220), outline=(70, 79, 93), width=1)
+            draw.text((label_x + 6, label_y + 1), timestamp_label, fill=timestamp_text, font=timestamp_font)
+
     top_label = f"Skala max: {max_value} (bazowy zakres: {baseline_floor})"
     bottom_label = "0"
     draw.text((left + 10, top - 22), top_label, fill=muted_text, font=small_font)
@@ -1013,7 +1094,7 @@ def guild_delta_marker(delta_10m: int) -> str:
 
 
 def build_discord_stats_payload(world: str, cycle_data: Dict, avatar_url: str) -> Dict:
-    now_iso = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    now_iso = poland_now().replace(microsecond=0).isoformat()
     title = f"Cwel Patrol | statystyki"
     delta_10m = int(cycle_data.get("delta_10m", 0))
     color, trend_label, trend_icon = trend_style(delta_10m)
@@ -1027,9 +1108,6 @@ def build_discord_stats_payload(world: str, cycle_data: Dict, avatar_url: str) -
         "timestamp": now_iso,
         "fields": [],
     }
-
-    if avatar_url:
-        embed["thumbnail"] = {"url": avatar_url}
 
     fields: List[Dict[str, object]] = [
         {
@@ -1105,7 +1183,7 @@ def build_discord_stats_payload(world: str, cycle_data: Dict, avatar_url: str) -
 
 
 def build_discord_group_chart_payload(cycle_data: Dict, history: List[Dict[str, object]], group: Dict[str, object], avatar_url: str) -> Dict:
-    now_iso = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    now_iso = poland_now().replace(microsecond=0).isoformat()
     group_row = build_group_row(cycle_data, group)
     points = extract_group_points(history, group_row["guild_ids"])
     if len(points) > CHART_MAX_POINTS:
@@ -1143,9 +1221,6 @@ def build_discord_group_chart_payload(cycle_data: Dict, history: List[Dict[str, 
         "fields": [],
     }
 
-    if avatar_url:
-        embed["thumbnail"] = {"url": avatar_url}
-
     fields: List[Dict[str, object]] = [
         {
             "name": "Online teraz",
@@ -1157,27 +1232,15 @@ def build_discord_group_chart_payload(cycle_data: Dict, history: List[Dict[str, 
             "value": f"**{delta_sign}{delta_10m}**",
             "inline": True,
         },
+    ]
+
+    fields.append(
         {
             "name": "Okno wykresu",
             "value": chart_window,
             "inline": True,
-        },
-        {
-            "name": "Klanow w grupie",
-            "value": str(len(group_row["guild_ids"])),
-            "inline": True,
-        },
-    ]
-
-    guild_names = group_row.get("guild_names", [])
-    if isinstance(guild_names, list) and guild_names:
-        fields.append(
-            {
-                "name": "Klany",
-                "value": truncate_text(", ".join(str(name) for name in guild_names), 1024),
-                "inline": False,
-            }
-        )
+        }
+    )
 
     embed["image"] = {"url": f"attachment://{image_filename}"}
 
@@ -1261,8 +1324,6 @@ def upsert_webhook_message(
     post_payload = dict(patch_payload)
     if webhook_username:
         post_payload["username"] = webhook_username
-    if webhook_avatar_url:
-        post_payload["avatar_url"] = webhook_avatar_url
 
     if files:
         post_payload["attachments"] = [{"id": 0, "filename": attachment_filename}]
