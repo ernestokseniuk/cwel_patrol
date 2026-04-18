@@ -1,11 +1,17 @@
 {
   "world": "gordion",
   "guild_ids": [3],
+  "guild_chart_groups": [
+    {
+      "name": "Glowna grupa",
+      "guild_ids": [3]
+    }
+  ],
   "output_mode": "terminal",
   "webhook_url": "",
   "webhook_username": "Cwel monitor",
   "webhook_avatar_url": "https://bivis.pl/wp-content/uploads/2025/09/Kamizelki.jpg",
-  "poll_seconds": 10,
+  "poll_seconds": 60,
   "guild_refresh_seconds": 3600,
   "request_timeout": 20,
   "state_file": "state.json",
